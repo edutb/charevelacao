@@ -39,7 +39,7 @@ function MarioGame() {
   var maxTick = 25; //max number for ticks to show mario sprite
   var instructionTick = 0; //showing instructions counter
   var fireballSpawnCounter = 0; // Adicionado: Contador para spawn de bolas de fogo
-  var fireballSpawnRate = 30; // MODIFICADO: Diminuído para gerar mais frequentemente (era 300)
+  var fireballSpawnRate = 80; // MODIFICADO: Diminuído para gerar mais frequentemente (era 300)
   var that = this;
 
   function Particle(x, y, hue) {
