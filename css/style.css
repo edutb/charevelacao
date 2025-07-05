@@ -1,0 +1,444 @@
+@font-face {
+  font-family: SuperMario256;
+  src: url('../fonts/SuperMario256.ttf');
+}
+
+/* Modificações NO HTML e BODY para tela cheia e centralização */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Evita barras de rolagem */
+  display: flex; /* Habilita flexbox para centralizar */
+  justify-content: center; /* Centraliza horizontalmente */
+  align-items: center; /* Centraliza verticalmente */
+  background-color: #333; /* Cor de fundo para preencher o espaço, se necessário */
+  font-family: 'Montserrat', sans-serif; /* Mantém a fonte do reset, ou defina uma global */
+}
+
+/* Contêiner principal do jogo - #main-wrapper */
+#main-wrapper {
+  position: relative; /* Importante para posicionar elementos absolutos dentro dele */
+  /* Definir um tamanho fixo para o "container ideal" do jogo */
+  /* Isso faz com que o jogo sempre tenha essa proporção de 1280x530 */
+  width: 1280px; /* Use a largura lógica do seu jogo */
+  height: 530px; /* Use a altura lógica (480 jogo + 50 score) */
+
+  /* Centralize o main-wrapper na tela usando margin auto */
+  margin: auto;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  /* Para garantir que ele escale para a tela cheia mantendo a proporção */
+  /* Adicionado um transform para escalar o wrapper inteiro proporcionalmente */
+  transform-origin: center center;
+  /* Este scaling será aplicado via JavaScript para um controle mais preciso */
+  /* Removido max-width/height direto daqui para evitar conflito com JS scaling */
+}
+
+/* Telas principais (Start, Editor, Game) */
+.start-screen,
+.editor-screen,
+.game-screen,
+.levels-wrapper {
+  width: 100%; /* Ocupa 100% da largura do #main-wrapper */
+  height: 100%; /* Ocupa 100% da altura do #main-wrapper */
+  position: absolute; /* Para sobrepor o canvas e ocupar o espaço do #main-wrapper */
+  top: 0;
+  left: 0;
+  border: none; /* Garante que não há borda nessas telas */
+  margin: 0; /* Garante que não haja margens */
+  background-size: cover; /* Faz a imagem de fundo cobrir toda a área */
+  background-position: center; /* Centraliza a imagem de fundo */
+}
+
+.start-screen {
+  background: url('../images/start-screen.png') no-repeat center center;
+  background-size: cover;
+}
+
+.editor-screen,
+.game-screen,
+.levels-wrapper {
+  background: url('../images/bg.png') no-repeat center center;
+  background-size: cover;
+  /* display: none; será controlado pelo JS */
+}
+
+/* O CANVAS em si - ele precisa se encaixar na resolução lógica do jogo e ser escalado pelo CSS */
+canvas {
+    display: block; /* Remove o espaço extra abaixo do canvas */
+    width: 100%; /* Ocupa 100% da largura de seu contêiner pai */
+    /* Altura do canvas = altura total do jogo - altura do score-wrapper */
+    height: calc(100% - 50px); /* 50px é a altura do score-wrapper */
+    object-fit: fill; /* Alterado de 'contain' para 'fill' para que o canvas preencha totalmente o espaço. Se 'contain' for essencial para a proporção do jogo, você precisará investigar o que está criando a "borda" abaixo, que pode ser o fundo do #main-wrapper ou .game-screen. */
+    image-rendering: optimizeSpeed; /* Cuidado com esta propriedade, pode não ser universal */
+    image-rendering: -moz-crisp-edges; /* Firefox */
+    image-rendering: -webkit-optimize-contrast; /* Safari */
+    image-rendering: optimize-contrast; /* Recomendado para pixel art */
+    -ms-interpolation-mode: nearest-neighbor; /* IE */
+    margin: 0; /* Removido 'auto' pois a altura está calculada e a tela ocupa 100% */
+    position: absolute; /* Para posicioná-lo no palco */
+    bottom: 0; /* Ancorar na parte inferior do .game-screen */
+    left: 0;
+    border: none; /* **Adicionado: Garante que o canvas não tenha borda própria** */
+}
+
+
+/* Ajustes para o score-wrapper */
+.score-wrapper {
+  position: absolute;
+  top: 0; /* Ancorar no topo */
+  left: 0;
+  width: 100%; /* Ocupa 100% da largura do #main-wrapper */
+  height: 50px; /* Altura fixa */
+  line-height: 50px; /* Para centralizar o texto verticalmente */
+  font-size: 20px; /* Tamanho da fonte pode precisar de ajuste fino ou ser responsivo com 'vw' */
+  background-color: rgba(173, 209, 243, 0.8); /* Fundo semi-transparente para melhor visibilidade */
+  font-family: SuperMario256;
+  color: #ffffff;
+  padding-left: 40px; /* Mantido padding, mas cuidado com ele em 100% de largura */
+  box-sizing: border-box; /* Garante que padding não adicione largura extra */
+  z-index: 100;
+  border: none; /* **Alterado: Remove qualquer borda aqui para o score-wrapper** */
+}
+
+/* Itens individuais da pontuação, float left continua funcionando bem */
+.life-count,
+.coin-score,
+.level-num,
+.total-score {
+  float: left;
+  padding-left: 40px; /* Ajuste se o tamanho da tela for muito pequeno */
+}
+.life-count {
+  background: url('../images/mario-head.png') left center no-repeat;
+  width: auto; /* Deixe automático para se ajustar ao conteúdo */
+  min-width: 100px; /* Mas mantenha um mínimo */
+}
+.coin-score {
+  background: url('../images/coin.png') left center no-repeat;
+  width: auto;
+  min-width: 150px;
+}
+.level-num {
+  width: auto;
+  min-width: 150px;
+}
+.total-score {
+  float: left;
+  width: auto;
+}
+
+/* Outros elementos do editor e níveis criados */
+.cell {
+  width: 31px;
+  height: 31px;
+  border: 1px solid blue;
+}
+
+.active {
+  width: 31px;
+  height: 31px;
+  border: 1px solid blue;
+  background: red;
+  opacity: 0.5;
+}
+
+.element-wrapper {
+  width: 100%; /* Adapta-se à largura total */
+  height: 130px; /* Mantém a altura fixa, ou ajuste para ser responsiva */
+  background: #d2d2d2;
+  margin: 0 auto;
+  border: 1px solid black;
+  display: none;
+  box-sizing: border-box; /* Garante que padding/border não adicione largura extra */
+}
+
+.platform {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') 0 0;
+}
+
+.coin-box {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -32px 0;
+}
+
+.power-up-box {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -64px 0;
+}
+
+.useless-box {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -96px 0;
+}
+
+.flag-pole {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -128px 0;
+}
+
+.flag {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -160px 0;
+}
+
+.pipe-left {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -192px 0;
+}
+
+.pipe-right {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -224px 0;
+}
+
+.pipe-top-left {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -256px 0;
+}
+
+.pipe-top-right {
+  width: 31px;
+  height: 31px;
+  background: url('../images/elements.png') -288px 0;
+}
+
+.goomba {
+  width: 31px;
+  height: 31px;
+  background: url('../images/enemies.png') 0 0;
+}
+
+.right-arrow {
+  width: 60px;
+  height: 60px;
+  top: 215px;
+  right: 0;
+  background: url('../images/slider-right.png');
+  position: absolute;
+}
+
+.left-arrow {
+  width: 60px;
+  height: 60px;
+  top: 215px;
+  left: 0;
+  background: url('../images/slider-left.png');
+  position: absolute;
+}
+
+.element-wrapper * {
+  margin: 10px;
+  float: left;
+}
+
+.lvl-size {
+  clear: both;
+  float: left;
+  width: 115px;
+  height: 32px;
+  background: url('../images/lvl-size.png');
+  margin-right: 10px;
+}
+
+.grid-small-btn {
+  float: left;
+  width: 64px;
+  height: 32px;
+  background: url('../images/grid-small-btn.png');
+  border: none;
+  margin-right: 10px;
+}
+
+.grid-medium-btn:selected {
+  background: red;
+}
+
+.grid-medium-btn {
+  float: left;
+  width: 96px;
+  height: 32px;
+  background: url('../images/grid-medium-btn.png');
+  border: none;
+  margin-right: 10px;
+}
+
+.grid-large-btn {
+  float: left;
+  width: 128px;
+  height: 32px;
+  background: url('../images/grid-large-btn.png');
+  border: none;
+  margin-right: 10px;
+}
+
+.save-map-btn {
+  float: right;
+  width: 100px;
+  height: 100px;
+  background: url('../images/save-map-btn.png');
+  border: none;
+  border: 2px solid black;
+  margin-right: 10px;
+  margin-top: -35px;
+}
+
+.clear-map-btn {
+  float: right;
+  width: 100px;
+  height: 100px;
+  background: url('../images/clear-map-btn.png');
+  border: none;
+  border: 2px solid black;
+  margin-right: 10px;
+  margin-top: -35px;
+}
+
+/* Botões da tela inicial - Ajustados para responsividade */
+.start-screen .btn-container { /* Adicionado este contêiner para os botões do menu */
+  position: absolute;
+  bottom: 100px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px; /* Espaçamento entre os botões */
+}
+
+.start-btn,
+.editor-btn,
+.created-btn {
+  width: 20%; /* Torna os botões responsivos à largura da tela */
+  max-width: 200px; /* Mas com um tamanho máximo para não ficarem gigantes */
+  height: 50px;
+  color: #ffffff;
+  border: 2px solid black;
+  /* --- AJUSTES PARA FUNCIONAR CORRETAMENTE --- */
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  /* SOLUÇÃO PARA NÃO SER CLICÁVEL OU FICAR ESCONDIDO:
+    Adiciona um z-index alto para garantir que o botão fique na frente de todos
+    os outros elementos da página.
+  */
+  z-index: 999;
+
+  display: block;
+  margin: 0;
+}
+
+/* Estilos de background para os botões */
+.start-btn {
+  background: url('../images/start-btn.png');
+}
+.editor-btn {
+  background: url('../images/editor-btn.png');
+}
+.created-btn {
+  background: url('../images/saved-btn.png');
+}
+
+/* Botão de Voltar ao Menu */
+.back-btn {
+  position: absolute;
+  top: 10px; /* Mantém no topo */
+  right: 10px; /* Mantém na direita */
+  width: 150px; /* Ajuste o tamanho para ser visível mas não muito grande */
+  height: 40px;
+  font-size: 1em; /* Ajuste o tamanho da fonte */
+  z-index: 210;
+  border: none; /* Removido */
+  border-radius: 5px; /* Adicionado para visual moderno */
+  background-color: transparent; /* Uma cor de destaque para "voltar" */
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+
+}
+
+.back-btn:hover {
+    background-color: #c82333;
+}
+
+/* Wrapper para o botão de voltar, se for separado */
+.btn-wrapper {
+  width: 100%; /* Adapta-se à largura total */
+  height: 100px; /* Mantém a altura, ou torne responsiva */
+  position: absolute; /* Para posicioná-lo sobre o jogo */
+  bottom: 0; /* Fixa na parte inferior */
+  left: 0;
+  display: flex;
+  justify-content: flex-end; /* Alinha o back-btn à direita */
+  align-items: center;
+  padding-right: 10px; /* Espaço para o botão */
+  box-sizing: border-box;
+  z-index: 200; /* Garante que fique acima de outras camadas */
+}
+
+.level-btn {
+  font-family: SuperMario256;
+  font-size: 25px;
+  float: left;
+  line-height: 50px;
+  text-align: center;
+  width: 248px;
+  height: 50px;
+  color: #ffffff;
+  border: 2px solid black;
+  margin: 2px;
+  text-transform: uppercase;
+  font-weight: bold;
+  background: #15a7d9;
+}
+
+.delete-all-btn {
+  width: 100px;
+  height: 100px;
+  background: url('../images/delete-all-btn.png');
+  color: #ffffff;
+  border: 2px solid black;
+  margin: 10px;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.no-maps {
+  width: 1000px;
+  text-align: center;
+  font-family: SuperMario256;
+  font-size: 25px;
+  margin: 0 auto;
+  color: #ffffff;
+  background: #5fb952;
+  border: 2px solid black;
+}
+
+.loading-percentage {
+  font-size: 60px;
+  font-family: SuperMario256;
+  text-align: center;
+  padding: 100px;
+}
+
+.fb-comments {
+  margin: 0 auto;
+}
